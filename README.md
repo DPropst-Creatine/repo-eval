@@ -31,8 +31,8 @@ score** built additively — every point is traceable to a named check:
 | Pushed in the last 30 / 90 days / year | 20 / 14 / 7 |
 | Code license declared (SPDX) | 15 |
 | LICENSE file present in tree | 5 |
-| Test files/directories present | 10 |
-| CI workflow configured | 10 |
+| Test files/directories present | 15 |
+| CI workflow configured | 15 |
 | README present and substantive (≥500 bytes) | 5 (2 if thin) |
 | Dockerfile present | 5 |
 | Homepage/demo link set | 5 |

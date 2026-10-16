@@ -169,9 +169,9 @@ def compute_score(signals):
     if signals.get("has_license_file"):
         score += add("LICENSE file present in tree", 5)
     if signals.get("tests"):
-        score += add("Test files/directories present", 10)
+        score += add("Test files/directories present", 15)
     if signals.get("has_ci"):
-        score += add("CI workflow configured", 10)
+        score += add("CI workflow configured", 15)
     readme_len = signals.get("readme_len", 0) or 0
     if readme_len >= 500:
         score += add("README present and substantive", 5)

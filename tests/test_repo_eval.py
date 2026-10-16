@@ -110,7 +110,7 @@ class TestDepParsers(unittest.TestCase):
 class TestComputeScore(unittest.TestCase):
     def test_max_signals(self):
         score, breakdown = repo_eval.compute_score(full_signals())
-        self.assertEqual(score, 90)
+        self.assertEqual(score, 100)
         labels = [b["label"] for b in breakdown]
         self.assertIn("Pushed in the last 30 days", labels)
         self.assertIn("Code license declared (MIT)", labels)
@@ -127,22 +127,22 @@ class TestComputeScore(unittest.TestCase):
     def test_push_boundaries(self):
         for days, pts in [(30, 20), (31, 14), (90, 14), (91, 7), (365, 7), (366, 0)]:
             score, _ = repo_eval.compute_score(full_signals(pushed_days=days))
-            self.assertEqual(score, 70 + pts, f"days={days}")
+            self.assertEqual(score, 80 + pts, f"days={days}")
 
     def test_license_noassertion(self):
         score, breakdown = repo_eval.compute_score(
             full_signals(license_spdx="NOASSERTION"))
-        self.assertEqual(score, 75)
+        self.assertEqual(score, 85)
         self.assertFalse(any("license declared" in b["label"].lower()
                              for b in breakdown))
 
     def test_readme_thin(self):
         score, _ = repo_eval.compute_score(full_signals(readme_len=499))
-        self.assertEqual(score, 87)  # 90 - 5 + 2
+        self.assertEqual(score, 97)  # 100 - 5 + 2
 
     def test_readme_missing(self):
         score, _ = repo_eval.compute_score(full_signals(readme_len=0))
-        self.assertEqual(score, 85)
+        self.assertEqual(score, 95)
 
     def test_issue_ratio_bands(self):
         cases = [((1000, 10), 10), ((1000, 50), 6), ((1000, 200), 3),
@@ -150,12 +150,12 @@ class TestComputeScore(unittest.TestCase):
         for (stars, issues), pts in cases:
             score, _ = repo_eval.compute_score(
                 full_signals(stars=stars, open_issues=issues))
-            self.assertEqual(score, 80 + pts,
+            self.assertEqual(score, 90 + pts,
                              f"stars={stars} issues={issues}")
 
     def test_contributors_band(self):
         score, _ = repo_eval.compute_score(full_signals(contributors=2))
-        self.assertEqual(score, 85)
+        self.assertEqual(score, 95)
 
     def test_additive_traceability(self):
         score, breakdown = repo_eval.compute_score(full_signals())
