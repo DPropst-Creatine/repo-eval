@@ -10,10 +10,29 @@ or agent makes on top of the facts).
 An LLM asked "is this repo any good?" will happily adjust its score to match the
 vibe. This tool can't. ~6 GitHub REST API calls, stdlib-only, one file.
 
+## Installation
+
+```bash
+pipx install repo-eval
+```
+
+or with pip:
+
+```bash
+pip install repo-eval
+```
+
+`pipx` is the recommended route for CLI tools — it installs into an isolated
+environment and puts the `repo-eval` command on your PATH.
+
+Prefer not to install anything? It's a single stdlib-only file, so downloading
+`repo_eval.py` and running it directly works anywhere Python 3.9+ lives.
+
 ## Quick start
 
 ```bash
-python3 repo_eval.py https://github.com/owner/repo
+repo-eval https://github.com/owner/repo
+# or, from a download: python3 repo_eval.py https://github.com/owner/repo
 ```
 
 Output is a JSON health report (score, traceable breakdown, red flags). Set
@@ -94,4 +113,4 @@ Tests are stdlib-only (`unittest`) and make no network calls:
 python3 -m unittest discover -s tests
 ```
 
-CI runs them on Python 3.10–3.13 for every push and pull request.
+CI runs them on Python 3.9–3.13 for every push and pull request.
