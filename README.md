@@ -1,5 +1,7 @@
 # repo-eval
 
+[![CI](https://github.com/DPropst-Creatine/repo-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/DPropst-Creatine/repo-eval/actions/workflows/ci.yml)
+
 A deterministic GitHub repository health check. It reports **checkable facts only** —
 no AI, no cloning, no invented numbers. The point is to separate *what the repo
 is* (facts an API can answer) from *whether you should use it* (judgment a human
@@ -83,3 +85,13 @@ $ python3 repo_eval.py https://github.com/HunxByts/GhostTrack
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Development
+
+Tests are stdlib-only (`unittest`) and make no network calls:
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+CI runs them on Python 3.10–3.13 for every push and pull request.

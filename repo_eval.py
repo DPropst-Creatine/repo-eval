@@ -142,6 +142,60 @@ def _gomod_deps(content):
                if re.match(r"\s+[^\s]+\s+v\d", ln))
 
 
+def compute_score(signals):
+    """Additive 0-100 health score. Every point is traceable to a named check.
+
+    `signals` keys: pushed_days, license_spdx, has_license_file, tests,
+    has_ci, readme_len, has_docker, homepage, contributors, stars,
+    open_issues. Returns (score, breakdown).
+    """
+    score, breakdown = 0, []
+
+    def add(label, pts):
+        breakdown.append({"label": label, "points": pts})
+        return pts
+
+    pushed_days = signals.get("pushed_days")
+    if pushed_days is not None:
+        if pushed_days <= 30:
+            score += add("Pushed in the last 30 days", 20)
+        elif pushed_days <= 90:
+            score += add("Pushed in the last 90 days", 14)
+        elif pushed_days <= 365:
+            score += add("Pushed in the last year", 7)
+
+    if signals.get("license_spdx") not in (None, "NOASSERTION"):
+        score += add("Code license declared (%s)" % signals.get("license_spdx"), 15)
+    if signals.get("has_license_file"):
+        score += add("LICENSE file present in tree", 5)
+    if signals.get("tests"):
+        score += add("Test files/directories present", 10)
+    if signals.get("has_ci"):
+        score += add("CI workflow configured", 10)
+    readme_len = signals.get("readme_len", 0) or 0
+    if readme_len >= 500:
+        score += add("README present and substantive", 5)
+    elif readme_len > 0:
+        score += add("README present but thin", 2)
+    if signals.get("has_docker"):
+        score += add("Dockerfile present", 5)
+    if signals.get("homepage"):
+        score += add("Homepage/demo link set", 5)
+    contributors = signals.get("contributors")
+    if contributors and contributors >= 3:
+        score += add(f"{contributors} contributors", 5)
+    stars = signals.get("stars", 0) or 0
+    open_issues = signals.get("open_issues", 0) or 0
+    ratio = open_issues / max(stars, 1)
+    if ratio < 0.05:
+        score += add("Healthy open-issue ratio", 10)
+    elif ratio < 0.2:
+        score += add("Acceptable open-issue ratio", 6)
+    elif ratio < 0.5:
+        score += add("Elevated open-issue ratio", 3)
+    return score, breakdown
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     flags = [a for a in sys.argv[1:] if a.startswith("--")]
@@ -215,45 +269,19 @@ def main():
     homepage = (meta.get("homepage") or "").strip() or None
 
     # ---- deterministic score (additive, every point traceable) ----
-    score, breakdown = 0, []
-
-    def add(label, pts):
-        breakdown.append({"label": label, "points": pts})
-        return pts
-
-    if pushed_days is not None:
-        if pushed_days <= 30:
-            score += add("Pushed in the last 30 days", 20)
-        elif pushed_days <= 90:
-            score += add("Pushed in the last 90 days", 14)
-        elif pushed_days <= 365:
-            score += add("Pushed in the last year", 7)
-
-    if license_info.get("spdx_id") not in (None, "NOASSERTION"):
-        score += add("Code license declared (%s)" % license_info.get("spdx_id"), 15)
-    if has_license_file:
-        score += add("LICENSE file present in tree", 5)
-    if tests:
-        score += add("Test files/directories present", 10)
-    if has_ci:
-        score += add("CI workflow configured", 10)
-    if readme_len >= 500:
-        score += add("README present and substantive", 5)
-    elif readme_len > 0:
-        score += add("README present but thin", 2)
-    if has_docker:
-        score += add("Dockerfile present", 5)
-    if homepage:
-        score += add("Homepage/demo link set", 5)
-    if contributors and contributors >= 3:
-        score += add(f"{contributors} contributors", 5)
-    ratio = open_issues / max(stars, 1)
-    if ratio < 0.05:
-        score += add("Healthy open-issue ratio", 10)
-    elif ratio < 0.2:
-        score += add("Acceptable open-issue ratio", 6)
-    elif ratio < 0.5:
-        score += add("Elevated open-issue ratio", 3)
+    score, breakdown = compute_score({
+        "pushed_days": pushed_days,
+        "license_spdx": license_info.get("spdx_id"),
+        "has_license_file": has_license_file,
+        "tests": tests,
+        "has_ci": has_ci,
+        "readme_len": readme_len,
+        "has_docker": has_docker,
+        "homepage": homepage,
+        "contributors": contributors,
+        "stars": stars,
+        "open_issues": open_issues,
+    })
 
     # ---- red flags ----
     flags = []
