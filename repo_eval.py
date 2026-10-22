@@ -73,7 +73,16 @@ def parse_repo_url(url):
     if not m:
         fail("error: that doesn't look like a GitHub repository URL")
     owner, repo = m.group(1), m.group(2)
-    return owner, repo[:-4] if repo.endswith(".git") else repo
+    repo = repo[:-4] if repo.endswith(".git") else repo
+    # Fail closed: owner/repo are interpolated raw into API paths, so reject
+    # anything outside GitHub's own naming rules (dot segments, percent
+    # encodings, '?' or '#' would otherwise alter the request path).
+    if len(owner) > 39 or not re.fullmatch(
+            r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?", owner):
+        fail("error: that doesn't look like a valid GitHub owner name")
+    if repo in (".", "..") or not re.fullmatch(r"[A-Za-z0-9._-]+", repo):
+        fail("error: that doesn't look like a valid GitHub repository name")
+    return owner, repo
 
 
 def days_since(iso):
@@ -213,6 +222,12 @@ def main():
         meta, _ = api_get(base, token)
     except NotFoundError:
         fail("error: repository not found (is it public?)")
+    if meta.get("private"):
+        # Public-only by design: never spend the operator's token on follow-on
+        # calls, or print derived data, for a repository the URL supplier may
+        # not be able to read themselves.
+        fail("error: repository is private; "
+             "repo_eval only evaluates public repositories")
     default_branch = meta.get("default_branch", "main")
 
     tree, _ = api_get(f"{base}/git/trees/{default_branch}?recursive=1", token)
